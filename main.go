@@ -13,11 +13,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
-	"github.com/ckf10000/gologger/core"
+	"github.com/ckf10000/gologger/v2/log"
 	_ "github.com/go-sql-driver/mysql" // 导入 MySQL 驱动程序
 	"github.com/streadway/amqp"
 )
@@ -123,17 +121,14 @@ func ConvertOrderMessageToOrder(msg OrderMessage) (Order, error) {
 }
 
 func main() {
-	// 获取当前可执行文件的路径
-	exePath, err := os.Executable()
-	if err != nil {
-		fmt.Printf("Error getting executable path: %v\n", err)
+	// 获取可执行文件所在目录的路径
+	exeDir := log.GetExecuteFilePath()
+	if exeDir == "" {
 		return
 	}
-	// 获取可执行文件所在目录的路径
-	exeDir := filepath.Dir(exePath)
-	fmt.Println(exeDir)
+
 	// projectPath := "./"
-	log := core.NewLogger("debug", exeDir, "comsumer.log", 50*1024*1024, true, true, true)
+	log := log.NewLogger("debug", exeDir, "comsumer.log", 50*1024*1024, true, true, true)
 	// RabbitMQ 连接信息
 	amqpURI := "amqp://ticket:Admin%40123@192.168.3.232:5672/smartIssueTickets"
 	exchangeName := "amq.fanout"
@@ -239,7 +234,7 @@ func main() {
 }
 
 // insertOrder 将订单插入到 MySQL
-func insertOrder(db *sql.DB, order Order, log *core.FileLogger) error {
+func insertOrder(db *sql.DB, order Order, log *log.FileLogger) error {
 	stmt, err := db.Prepare(`
 		INSERT INTO t_orders (
 			pre_order_id, departure_city, arrive_city, departure_time,
