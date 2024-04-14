@@ -15,7 +15,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ckf10000/gologger/v2/log"
+	"github.com/apolloconfig/agollo/v4"
+	"github.com/apolloconfig/agollo/v4/agcache"
+	"github.com/apolloconfig/agollo/v4/env/config"
+	"github.com/ckf10000/gologger/v3/log"
 	_ "github.com/go-sql-driver/mysql" // 导入 MySQL 驱动程序
 	"github.com/streadway/amqp"
 )
@@ -120,6 +123,24 @@ func ConvertOrderMessageToOrder(msg OrderMessage) (Order, error) {
 	return order, nil
 }
 
+func GetApolloCache(log *log.FileLogger) agcache.CacheInterface {
+	c := &config.AppConfig{
+		AppID:          "org-system-order-consumer",
+		Cluster:        "PRO",
+		IP:             "http://192.168.3.232:8080",
+		NamespaceName:  "application",
+		IsBackupConfig: true,
+		Secret:         "8c64c50f8ea0452db1b00cc0e8f2c9a1",
+	}
+
+	client, _ := agollo.StartWithConfig(func() (*config.AppConfig, error) {
+		return c, nil
+	})
+	log.Info("初始化Apollo配置成功.")
+	cache := client.GetConfigCache(c.NamespaceName)
+	return cache
+}
+
 func main() {
 	// 获取可执行文件所在目录的路径
 	exeDir := log.GetExecuteFilePath()
@@ -128,34 +149,45 @@ func main() {
 	}
 
 	// projectPath := "./"
-	log := log.NewLogger("debug", exeDir, "comsumer.log", 50*1024*1024, true, true, true)
+	log := log.NewLogger("debug", exeDir, "comsumer.log", "simple", 50*1024*1024, true, true, true)
+	cache := GetApolloCache(log)
+	log.Info("开始启动Consumer...")
 	// RabbitMQ 连接信息
-	amqpURI := "amqp://ticket:Admin%40123@192.168.3.232:5672/smartIssueTickets"
-	exchangeName := "amq.fanout"
-	exchangeType := "fanout"
-	queueName := "order.flight.ctrip"
-	routingKey := "order.flight.ctrip"
-
+	amqpURI, _ := cache.Get("amqpURI")
+	exchangeName, _ := cache.Get("exchangeName")
+	exchangeType, _ := cache.Get("exchangeType")
+	queueName, _ := cache.Get("queueName")
+	routingKey, _ := cache.Get("routingKey")
+	log.Info("开始连接MQ：%s", amqpURI)
 	// MySQL 连接信息
-	mysqlURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", "root", "Admin@123", "192.168.3.232", "3306", "cloudBeanOrder")
+	mysqlUser, _ := cache.Get("mysqlUser")
+	mysqlPassword, _ := cache.Get("mysqlPassword")
+	mysqlHost, _ := cache.Get("mysqlHost")
+	mysqlPort, _ := cache.Get("mysqlPort")
+	mysqlDatabase, _ := cache.Get("mysqlDatabase")
+	mysqlURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", mysqlUser, mysqlPassword, mysqlHost, mysqlPort, mysqlDatabase)
 
 	// 连接 RabbitMQ
-	conn, err := amqp.Dial(amqpURI)
+	conn, err := amqp.Dial(amqpURI.(string))
 	if err != nil {
 		log.Error("Failed to connect to RabbitMQ: %v", err)
+	} else {
+		log.Info("连接MQ正常.")
 	}
 	defer conn.Close()
 
 	channel, err := conn.Channel()
 	if err != nil {
 		log.Error("Failed to open a channel: %v", err)
+	} else {
+		log.Info("MQ通道已打开.")
 	}
 	defer channel.Close()
 
 	// 声明 Exchange
 	err = channel.ExchangeDeclare(
-		exchangeName,
-		exchangeType,
+		exchangeName.(string),
+		exchangeType.(string),
 		true,
 		false,
 		false,
@@ -164,10 +196,12 @@ func main() {
 	)
 	if err != nil {
 		log.Error("Failed to declare an exchange: %v", err)
+	} else {
+		log.Info("MQ声明exchange: %s 完成.", exchangeName)
 	}
 
 	_, err = channel.QueueDeclare(
-		queueName,
+		queueName.(string),
 		true,
 		false,
 		false,
@@ -176,30 +210,36 @@ func main() {
 	)
 	if err != nil {
 		log.Error("Failed to declare a queue: %v", err)
+	} else {
+		log.Info("MQ声明队列: %s 完成.", queueName)
 	}
 
 	// 绑定 Queue 到 Exchange
 	err = channel.QueueBind(
-		queueName,
-		routingKey,
-		exchangeName,
+		queueName.(string),
+		routingKey.(string),
+		exchangeName.(string),
 		false,
 		nil,
 	)
 	if err != nil {
 		log.Error("Failed to bind queue to exchange: %v", err)
+	} else {
+		log.Info("MQ绑定队列: %s 至exchange: %s 完成.", queueName, exchangeName)
 	}
 
 	// 连接 MySQL
 	db, err := sql.Open("mysql", mysqlURI)
 	if err != nil {
 		log.Error("Failed to connect to MySQL: %v", err)
+	} else {
+		log.Info("连接Mysql数据库：%s 正常.", mysqlURI)
 	}
 	defer db.Close()
 
 	// 消费 RabbitMQ 消息
 	msgs, err := channel.Consume(
-		queueName,
+		queueName.(string),
 		"",
 		true,
 		false,
@@ -209,6 +249,8 @@ func main() {
 	)
 	if err != nil {
 		log.Error("Failed to register a consumer: %v", err)
+	} else {
+		log.Info("开始接收队列: %s 中的消息.", queueName)
 	}
 
 	for msg := range msgs {
