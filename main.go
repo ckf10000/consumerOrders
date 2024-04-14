@@ -163,6 +163,7 @@ func main() {
 	mysqlUser, _ := cache.Get("mysqlUser")
 	mysqlPassword, _ := cache.Get("mysqlPassword")
 	mysqlHost, _ := cache.Get("mysqlHost")
+	
 	mysqlPort, _ := cache.Get("mysqlPort")
 	mysqlDatabase, _ := cache.Get("mysqlDatabase")
 	mysqlURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", mysqlUser, mysqlPassword, mysqlHost, mysqlPort, mysqlDatabase)
