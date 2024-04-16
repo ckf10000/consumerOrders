@@ -9,6 +9,29 @@
 * *********************************************************************************************************************/
 package internal
 
+import "time"
+
+// headers  内容
+// {
+// 	"app_id": "smartIssueTickets",
+// 	"user_id": "ticket",
+// 	"timestamp": 1712979477811,
+// 	"message_id": "e9c8bcb8-56d4-4ce4-93c7-67a087f269de",
+// 	"delivery_mode": 2,
+// 	"content_encoding": "utf-8",
+// 	"content_type": "application/json"
+// }
+
+type MessageHeaders struct {
+	AppId           string    `json:"app_id"`
+	UserId          string    `json:"user_id"`
+	Timestamp       time.Time `json:"timestamp"`
+	MessageId       string    `json:"message_id"`
+	DeliveryMode    int       `json:"delivery_mode"`
+	ContentEncoding string    `json:"content_encoding"`
+	ContentType     string    `json:"content_type"`
+}
+
 type OrderMessage struct {
 	PreOrderID        int    `json:"pre_order_id"`
 	DepartureCity     string `json:"departure_city"`

@@ -23,6 +23,9 @@ type MessageHandler func(msg *amqp.Delivery, db *sql.DB, log *log.FileLogger) er
 // handleMessage 处理消息的具体逻辑
 func OrderMessageHandler(msg *amqp.Delivery, db *sql.DB, log *log.FileLogger) error {
 	var orderMessage OrderMessage
+
+	// 获取消息的 Properties 数据，内容如下：
+	messageHeaders := ConvertHeadersToMessageHeaders(msg, log)
 	err := json.Unmarshal(msg.Body, &orderMessage)
 	if err != nil {
 		log.Error("Error decoding message: %v", err)
@@ -30,7 +33,7 @@ func OrderMessageHandler(msg *amqp.Delivery, db *sql.DB, log *log.FileLogger) er
 	}
 
 	log.Fatal("The received message is: %v", orderMessage)
-	order, err := ConvertOrderMessageToOrder(orderMessage)
+	order, err := ConvertOrderMessageToOrder(orderMessage, messageHeaders)
 	if err != nil {
 		log.Error("message to order failed.")
 		return err
