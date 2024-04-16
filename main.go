@@ -52,8 +52,8 @@ func main() {
 	}
 
 	// MySQL 连接信息
-	mysqlUser, _ := cache.Get("mysql.username")
-	mysqlPassword, _ := cache.Get("mysql.password")
+	mysqlUser, _ := cache.Get("mysqlUser")
+	mysqlPassword, _ := cache.Get("mysqlPassword")
 	mysqlHost, _ := cache.Get("mysqlHost")
 
 	mysqlPort, _ := cache.Get("mysqlPort")

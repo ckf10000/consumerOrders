@@ -9,8 +9,6 @@
 * *********************************************************************************************************************/
 package internal
 
-import "time"
-
 // headers  内容
 // {
 // 	"app_id": "smartIssueTickets",
@@ -21,16 +19,6 @@ import "time"
 // 	"content_encoding": "utf-8",
 // 	"content_type": "application/json"
 // }
-
-type MessageHeaders struct {
-	AppId           string    `json:"app_id"`
-	UserId          string    `json:"user_id"`
-	Timestamp       time.Time `json:"timestamp"`
-	MessageId       string    `json:"message_id"`
-	DeliveryMode    int       `json:"delivery_mode"`
-	ContentEncoding string    `json:"content_encoding"`
-	ContentType     string    `json:"content_type"`
-}
 
 type OrderMessage struct {
 	PreOrderID        int    `json:"pre_order_id"`
@@ -59,4 +47,5 @@ type OrderMessage struct {
 	PayAccountType    string `json:"pay_account_type"`
 	PayAccount        string `json:"pay_account"`
 	Oper              string `json:"oper"`
+	PaymentTime       string `json:"payment_time"`
 }
