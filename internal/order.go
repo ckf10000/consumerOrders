@@ -44,8 +44,7 @@ type Order struct {
 	PayAccountType    string    `json:"pay_account_type"`
 	PayAccount        string    `json:"pay_account"`
 	Oper              string    `json:"oper"`
-	CreateTime        time.Time `json:"create_time"`
-	UpdateTime        time.Time `json:"update_time"`
+	PaymentTime       time.Time `json:"payment_time"`
 }
 
 // insertOrder 将订单插入到 MySQL
@@ -57,9 +56,9 @@ func insertOrder(db *sql.DB, order Order, log *log.FileLogger) error {
 			internal_phone, passenger_phone, ctrip_order_id, payment_amount, 
 			payment_method, itinerary_id, departure_city_name, arrive_city_name, 
 			arrive_time, ctrip_username, user_pass, out_pf, out_ticket_account, 
-			pay_account_type, pay_account, oper, create_time, update_time
+			pay_account_type, pay_account, oper, payment_time
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`)
 	if err != nil {
@@ -72,7 +71,7 @@ func insertOrder(db *sql.DB, order Order, log *log.FileLogger) error {
 		order.CardID, order.InternalPhone, order.PassengerPhone, order.CTripOrderID,
 		order.PaymentAmount, order.PaymentMethod, order.ItineraryID, order.DepartureCityName,
 		order.ArriveCityName, order.ArriveTime, order.CTripUsername, order.UserPass, order.OutPf,
-		order.OutTicketAccount, order.PayAccountType, order.PayAccount, order.Oper, order.CreateTime, order.UpdateTime,
+		order.OutTicketAccount, order.PayAccountType, order.PayAccount, order.Oper, order.PaymentTime,
 	)
 	if err != nil {
 		return err

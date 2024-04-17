@@ -56,8 +56,7 @@ func ConvertOrderMessageToOrder(msg OrderMessage) (Order, error) {
 		PayAccountType:    msg.PayAccountType,
 		PayAccount:        msg.PayAccount,
 		Oper:              msg.Oper,
-		CreateTime:        paymentTime,
-		UpdateTime:        paymentTime,
+		PaymentTime:       paymentTime,
 	}
 
 	return order, nil
